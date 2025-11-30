@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ta">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Customer — Token</title></head>
+<body>
+  <h1>Get Token</h1>
+  <input id="custName" placeholder="Name"/><input id="custPhone" placeholder="Phone"/><button id="getTokenBtn">Get Token</button>
+  <div id="myToken"></div>
+
+<script type="module">
+import { db, dbRef, dbPush, dbOnValue, messaging, getToken, onMessage } from './firebase.js';
+
+async function registerForPush(){
+  if(!('Notification' in window)) return;
+  const perm = await Notification.requestPermission();
+  if(perm !== 'granted') return;
+  const vapidKey = 'BCGa_Gw3Itn7V06r4aVxcDE4PklpYnuBwQvNW1B5OCZPX-hHHJM9uwPMBFRSN5bss5gYSTJUv6VANru1hawgV7k';
+  try {
+    const token = await getToken(messaging, { vapidKey });
+    if(token) {
+      await dbRef(db, 'fcm_tokens/' + token).set({ token, createdAt: Date.now() });
+      console.log('fcm token saved');
+    }
+  } catch(e){ console.warn(e); }
+}
+registerForPush();
+
+onMessage(messaging, payload => {
+  console.log('Message in foreground', payload);
+  if(Notification.permission === 'granted') new Notification(payload.notification?.title || 'Update', { body: payload.notification?.body || payload.data?.message });
+});
+
+document.getElementById('getTokenBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('custName').value || 'Guest';
+  const phone = document.getElementById('custPhone').value || '';
+  // Simple token push: push to rs_tokens/<date> - minimal format
+  const key = new Date().toISOString().slice(0,10);
+  const ref = dbRef(db, 'rs_tokens/' + key);
+  // fetch current, then append (simple)
+  const newItemRef = dbRef(db, 'rs_tokens/' + key + '/tokens');
+  try {
+    const id = Date.now();
+    await dbRef(db, 'rs_tokens/' + key + '/tokens/' + id).set({ id, ticket: id, name, phone, status: 'open', created: Date.now() });
+    document.getElementById('myToken').innerText = 'Token issued: ' + id;
+  } catch(e){ console.error(e); alert('Failed to issue');}
+});
+</script>
+</body>
+</html>
