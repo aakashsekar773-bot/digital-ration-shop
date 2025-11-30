@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ta">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Ration Shop — Home</title></head>
+<body>
+  <h1>Ration Shop Home</h1>
+  <div id="announcements"></div>
+
+<script type="module">
+import { db, dbRef, dbOnValue, messaging, getToken, onMessage } from './firebase.js';
+
+async function registerForPush(){
+  if(!('Notification' in window)) return;
+  const perm = await Notification.requestPermission();
+  if(perm !== 'granted') return;
+  // Replace with your VAPID public key
+  const vapidKey = 'BCGa_Gw3Itn7V06r4aVxcDE4PklpYnuBwQvNW1B5OCZPX-hHHJM9uwPMBFRSN5bss5gYSTJUv6VANru1hawgV7k';
+  try {
+    const token = await getToken(messaging, { vapidKey });
+    if(token){
+      // save token
+      const tRef = dbRef(db, 'fcm_tokens/' + token);
+      await dbRef(db, 'fcm_tokens/' + token).set({ token, createdAt: Date.now() });
+      console.log('saved token', token);
+    }
+  } catch(e){ console.warn('getToken failed', e); }
+}
+registerForPush();
+
+onMessage(messaging, payload => {
+  console.log('onMessage', payload);
+  const body = payload.notification?.body || payload.data?.message || '';
+  if(Notification.permission === 'granted') new Notification(payload.notification?.title || 'Announcement', { body });
+});
+
+const annDiv = document.getElementById('announcements');
+const annRef = dbRef(db, 'ration_shop/default/announcements');
+dbOnValue(annRef, snap=>{
+  const val = snap.val();
+  annDiv.innerHTML = '<h2>Announcements</h2>';
+  if(!val || !val.length) { annDiv.innerHTML += '<p>No announcements</p>'; return; }
+  val.forEach(a=> annDiv.innerHTML += `<div><strong>${a.title}</strong><p>${a.content}</p></div>`);
+});
+</script>
+</body>
+</html>
