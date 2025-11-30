@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ta">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ration Shop — Owner / Admin</title>
+  <style>body{font-family:Segoe UI;margin:20px;background:#f0f7ff} .card{background:#fff;padding:18px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.06)}</style>
+</head>
+<body>
+  <div class="card" id="owner">
+    <h2>Shop Administration</h2>
+    <div>
+      <label>Admin Password</label>
+      <input id="owner-pass" type="password" />
+      <button id="unlock-btn">Unlock</button>
+    </div>
+    <div style="margin-top:12px">
+      <button id="add-announce" disabled>Add Announcement</button>
+      <div id="announce-editor"></div>
+    </div>
+    <div style="margin-top:12px">
+      <button id="save-all" disabled>Save All</button>
+    </div>
+  </div>
+
+<script type="module" src="./owneradmin.js"></script>
+</body>
+</html>
